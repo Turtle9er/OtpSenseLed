@@ -13,7 +13,7 @@ LedControl Led;
 LedControl rLed;
 LedControl gLed;
 LedControl yLed;
-LedControl bLed
+LedControl bLed;
 
 void LedControl::begin(int ledPin)
 {
