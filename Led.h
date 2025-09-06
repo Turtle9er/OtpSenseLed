@@ -22,3 +22,4 @@ extern LedControl Led;
 extern LedControl rLed;
 extern LedControl gLed;
 extern LedControl yLed;
+extern LedControl bLed;
