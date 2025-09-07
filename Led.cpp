@@ -21,7 +21,7 @@ void LedControl::begin(int ledPin)
 	pinMode(ledPin, OUTPUT);
 }
 
-void LedControl::error(int longBlinks, int shortBlinks)
+void LedControl::flashError(int longBlinks, int shortBlinks)
 {
 	for (int i = 0; i < longBlinks; i++)
 	{
