@@ -7,7 +7,7 @@ private:
 public:
 	void begin(int ledPin);
 
-	void error(int longBlinks, int shortBlinks);
+	void flashError(int longBlinks, int shortBlinks);
 	void pulse() { beat(1000, 50); }
 	void blink() { beat(100, 100); }
 	void burst() { beat(200, 200); }
