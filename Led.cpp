@@ -14,6 +14,7 @@ LedControl rLed;
 LedControl gLed;
 LedControl yLed;
 LedControl bLed;
+LedControl gLedGPS;
 
 void LedControl::begin(int ledPin)
 {
