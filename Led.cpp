@@ -13,6 +13,8 @@ LedControl Led;
 LedControl rLed;
 LedControl gLed;
 LedControl yLed;
+LedControl bLed;
+LedControl LedGPS;
 
 void LedControl::begin(int ledPin)
 {
@@ -20,10 +22,29 @@ void LedControl::begin(int ledPin)
 	pinMode(ledPin, OUTPUT);
 }
 
+void LedControl::flashError(int longBlinks, int shortBlinks)
+{
+	for (int i = 0; i < longBlinks; i++)
+	{
+		digitalWriteFast(_ledPin, HIGH);
+		delay(500);
+		digitalWriteFast(_ledPin, LOW);
+		delay(500);
+	}
+	delay(1000);
+	for (int i = 0; i < shortBlinks; i++)
+	{
+		digitalWriteFast(_ledPin, HIGH);
+		delay(150);
+		digitalWriteFast(_ledPin, LOW);
+		delay(150);
+	}
+}
+
 void LedControl::beat(uint32_t rate1, uint32_t rate2)
 {
 	static uint32_t prev = millis();
-	uint8_t state = digitalReadFast(_ledPin);
+	uint8_t state = digitalRead(_ledPin);
 #ifdef INVERSE_SIGNAL
 	uint32_t pulse = state ? rate1 : rate2;
 #else
@@ -31,23 +52,23 @@ void LedControl::beat(uint32_t rate1, uint32_t rate2)
 #endif
 	if (millis() - prev > pulse)
 	{
-		digitalWriteFast(_ledPin, !state);
+		digitalWrite(_ledPin, !state);
 		prev = millis();
 	}
 }
 
 void LedControl::swap()
 {
-	uint8_t state = digitalReadFast(_ledPin);
-	digitalWriteFast(_ledPin, !state);
+	uint8_t state = digitalRead(_ledPin);
+	digitalWrite(_ledPin, !state);
 }
 
 void LedControl::off()
 {
-	digitalWriteFast(_ledPin, _OFF);
+	digitalWrite(_ledPin, _OFF);
 }
 
 void LedControl::on()
 {
-	digitalWriteFast(_ledPin, _ON);
+	digitalWrite(_ledPin, _ON);
 }

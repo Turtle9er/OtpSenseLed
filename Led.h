@@ -7,6 +7,7 @@ private:
 public:
 	void begin(int ledPin);
 
+	void flashError(int longBlinks, int shortBlinks);
 	void pulse() { beat(1000, 50); }
 	void blink() { beat(100, 100); }
 	void burst() { beat(200, 200); }
@@ -22,3 +23,5 @@ extern LedControl Led;
 extern LedControl rLed;
 extern LedControl gLed;
 extern LedControl yLed;
+extern LedControl bLed;
+extern LedControl LedGPS;
