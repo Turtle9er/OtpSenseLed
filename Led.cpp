@@ -26,17 +26,17 @@ void LedControl::flashError(int longBlinks, int shortBlinks)
 {
 	for (int i = 0; i < longBlinks; i++)
 	{
-		digitalWriteFast(_ledPin, HIGH);
+		digitalWrite(_ledPin, HIGH);
 		delay(500);
-		digitalWriteFast(_ledPin, LOW);
+		digitalWrite(_ledPin, LOW);
 		delay(500);
 	}
 	delay(1000);
 	for (int i = 0; i < shortBlinks; i++)
 	{
-		digitalWriteFast(_ledPin, HIGH);
+		digitalWrite(_ledPin, HIGH);
 		delay(150);
-		digitalWriteFast(_ledPin, LOW);
+		digitalWrite(_ledPin, LOW);
 		delay(150);
 	}
 }
