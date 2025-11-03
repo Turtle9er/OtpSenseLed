@@ -17,11 +17,7 @@ private:
 public:
     void begin(int ledPin);
 
-    // --- Blocking Flash Functions ---
-    
-    // Flashes a two-part error code (e.g., 3 long, 2 short)
-    void flashError(int longBlinks, int shortBlinks);
-    
+    // --- Blocking Flash Functions ---   
     // Flashes for a specific duration
     void pulse(unsigned long duration_ms); // 1000ms on, 50ms off
     void blink(unsigned long duration_ms); // 100ms on, 100ms off
