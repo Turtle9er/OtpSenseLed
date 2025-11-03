@@ -7,6 +7,12 @@ class LedControl
 {
 private:
     int _ledPin;
+    // --- NEW Private Variables for Non-Blocking ---
+    bool _isNonBlocking;  // True if we are in a non-blocking flash mode
+    bool _ledState;       // The current logical state (true=ON, false=OFF)
+    unsigned long _rate1; // On-time
+    unsigned long _rate2; // Off-time
+    unsigned long _previousMillis; // Timestamp of last state change
 
 public:
     void begin(int ledPin);
@@ -30,6 +36,14 @@ public:
     // --- Core blocking beat ---
     // This is the function all the duration-based ones call
     void beat(uint32_t rate1, uint32_t rate2);
+
+    // --- NEW Non-Blocking Functions ---
+    // Call these to start a flash while your loop runs
+    void update(); // MUST be called in your main loop()
+    void startPulse();
+    void startBlink();
+    void startBurst();
+    void startFlash();
 };
 
 #endif

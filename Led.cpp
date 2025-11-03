@@ -19,28 +19,11 @@ void LedControl::begin(int ledPin)
 {
     _ledPin = ledPin;
     pinMode(ledPin, OUTPUT);
+    // Initialize new variables
+    _isNonBlocking = false;
+    _ledState = false; // Start in OFF state
+    _previousMillis = 0;
     off(); // Start with the LED off
-}
-
-void LedControl::flashError(int longBlinks, int shortBlinks)
-{
-    // Updated to use the _ON and _OFF macros
-    for (int i = 0; i < longBlinks; i++)
-    {
-        digitalWrite(_ledPin, _ON);
-        delay(500);
-        digitalWrite(_ledPin, _OFF);
-        delay(500);
-    }
-    delay(1000);
-    for (int i = 0; i < shortBlinks; i++)
-    {
-        digitalWrite(_ledPin, _ON);
-        delay(150);
-        digitalWrite(_ledPin, _OFF);
-        delay(150);
-    }
-    off(); // Ensure it's off when done
 }
 
 /**
@@ -102,6 +85,77 @@ void LedControl::flash(unsigned long duration_ms) {
     off();
 }
 
+// --- NEW: update() Function ---
+/**
+ * @brief This is the core of the non-blocking flash.
+ * Call this in your main loop() to make the LED flash.
+ */
+void LedControl::update()
+{
+    // If we're not in a non-blocking mode, do nothing.
+    if (!_isNonBlocking) {
+        return;
+    }
+
+    // Check if it's time to change the state
+    unsigned long currentMillis = millis();
+    
+    // Get the correct duration for the current state (on-time or off-time)
+    unsigned long pulseDuration = _ledState ? _rate1 : _rate2;
+
+    if (currentMillis - _previousMillis >= pulseDuration)
+    {
+        _previousMillis = currentMillis; // Reset the timer
+        _ledState = !_ledState;          // Flip the state (ON -> OFF or OFF -> ON)
+
+        // Set the pin to the new physical state
+        digitalWrite(_ledPin, _ledState ? _ON : _OFF);
+    }
+}
+
+// --- NEW: start...() Functions ---
+// These set the rates and enable the update() logic.
+
+void LedControl::startPulse()
+{
+    _rate1 = 1000;
+    _rate2 = 50;
+    _isNonBlocking = true;
+    _previousMillis = millis(); // Start the timer
+    _ledState = true;           // Start in the ON state
+    digitalWrite(_ledPin, _ON);
+}
+
+void LedControl::startBlink()
+{
+    _rate1 = 100;
+    _rate2 = 100;
+    _isNonBlocking = true;
+    _previousMillis = millis();
+    _ledState = true;
+    digitalWrite(_ledPin, _ON);
+}
+
+void LedControl::startBurst()
+{
+    _rate1 = 200;
+    _rate2 = 200;
+    _isNonBlocking = true;
+    _previousMillis = millis();
+    _ledState = true;
+    digitalWrite(_ledPin, _ON);
+}
+
+void LedControl::startFlash()
+{
+    _rate1 = 20;
+    _rate2 = 20;
+    _isNonBlocking = true;
+    _previousMillis = millis();
+    _ledState = true;
+    digitalWrite(_ledPin, _ON);
+}
+
 // --- STANDARD ON/OFF/SWAP FUNCTIONS ---
 
 void LedControl::swap()
@@ -111,12 +165,17 @@ void LedControl::swap()
     digitalWrite(_ledPin, !state);
 }
 
+// --- MODIFIED: on() and off() ---
+// These must now disable the non-blocking mode.
+
 void LedControl::off()
 {
+    _isNonBlocking = false; // Stop any non-blocking flash
     digitalWrite(_ledPin, _OFF);
 }
 
 void LedControl::on()
 {
+    _isNonBlocking = false; // Stop any non-blocking flash
     digitalWrite(_ledPin, _ON);
 }
