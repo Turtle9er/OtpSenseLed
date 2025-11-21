@@ -1,119 +1,114 @@
 #include "Arduino.h"
 #include "Led.h" // Assuming your header file is Led.h
 
-// --- This block defines ON and OFF based on your INVERSE_SIGNAL ---
-// This is great, we'll use it everywhere.
-#ifdef INVERSE_SIGNAL
-#define _ON LOW
-#define _OFF HIGH
-#else
-#define _ON HIGH
-#define _OFF LOW
-#endif
 
-// --- DELETED ---
-// All the global LedControl objects (rLed, gLed, etc.)
-// have been removed. You must add them to your main .ino file.
+// --- Private Helper Function: Writes the logical state to the physical pin ---
+// This function encapsulates the inversion logic.
+// If logicalState is true (ON), it checks 'is_inverted' to decide HIGH or LOW.
+void LedControl::_writeHardwareState(bool logicalState) {
+    int hardwarePinValue;
 
-void LedControl::begin(int ledPin)
+    if (logicalState) { // We want the LED to be logically ON
+        // If inverted (active-low), ON means pin LOW. Otherwise, pin HIGH.
+        hardwarePinValue = is_inverted ? LOW : HIGH;
+    } else { // We want the LED to be logically OFF
+        // If inverted (active-low), OFF means pin HIGH. Otherwise, pin LOW.
+        hardwarePinValue = is_inverted ? HIGH : LOW;
+    }
+
+    digitalWrite(_ledPin, hardwarePinValue);
+    _ledState = logicalState; // Keep track of the logical state (true=ON, false=OFF)
+}
+
+
+void LedControl::begin(int ledPin, bool inverted)
 {
     _ledPin = ledPin;
+    is_inverted = inverted; // Store the inversion flag
     pinMode(ledPin, OUTPUT);
-    // Initialize new variables
+    // Initialize non-blocking variables
     _isNonBlocking = false;
-    _ledState = false; // Start in OFF state
+    _ledState = false; // Start in logical OFF state
     _previousMillis = 0;
-    off(); // Start with the LED off
+    
+    // Call off() which now respects the 'is_inverted' flag
+    off(); 
 }
 
 /**
  * @brief This is the core BLOCKING beat function.
  * It turns the LED on for rate1 ms, then off for rate2 ms.
- * The non-blocking version was removed to prevent a compiler error.
+ * Now uses on() and off() for inversion awareness.
  */
 void LedControl::beat(uint32_t rate1, uint32_t rate2)
 {
-    digitalWrite(_ledPin, _ON);
+    // Use the now-fixed on() and off() functions
+    on();
     delay(rate1);
-    digitalWrite(_ledPin, _OFF);
+    off();
     delay(rate2);
 }
 
-// --- NEW DURATION-BASED FUNCTIONS ---
+// --- DURATION-BASED FUNCTIONS (No changes needed, they call beat/off) ---
 
-/**
- * @brief Keeps pulsing (1000ms on, 50ms off) for a set duration.
- */
 void LedControl::pulse(unsigned long duration_ms) {
     unsigned long startTime = millis();
     while (millis() - startTime < duration_ms) {
-        beat(1000, 50); // Pulse rates
+        beat(1000, 50);
     }
-    off(); // Ensure the LED is off when finished
+    off();
 }
 
-/**
- * @brief Keeps blinking (100ms on, 100ms off) for a set duration.
- */
 void LedControl::blink(unsigned long duration_ms) {
     unsigned long startTime = millis();
     while (millis() - startTime < duration_ms) {
-        beat(100, 100); // Blink rates
+        beat(100, 100);
     }
     off();
 }
 
-/**
- * @brief Keeps bursting (200ms on, 200ms off) for a set duration.
- */
 void LedControl::burst(unsigned long duration_ms) {
     unsigned long startTime = millis();
     while (millis() - startTime < duration_ms) {
-        beat(200, 200); // Burst rates
+        beat(200, 200);
     }
     off();
 }
 
-/**
- * @brief Keeps flashing (20ms on, 20ms off) for a set duration.
- */
 void LedControl::flash(unsigned long duration_ms) {
     unsigned long startTime = millis();
     while (millis() - startTime < duration_ms) {
-        beat(20, 20); // Flash rates
+        beat(20, 20);
     }
     off();
 }
 
-// --- NEW: update() Function ---
-/**
- * @brief This is the core of the non-blocking flash.
- * Call this in your main loop() to make the LED flash.
- */
+// --- Non-Blocking update() Function ---
+
 void LedControl::update()
 {
-    // If we're not in a non-blocking mode, do nothing.
     if (!_isNonBlocking) {
         return;
     }
 
-    // Check if it's time to change the state
     unsigned long currentMillis = millis();
     
-    // Get the correct duration for the current state (on-time or off-time)
+    // Get the correct duration for the current state (rate1 for ON, rate2 for OFF)
     unsigned long pulseDuration = _ledState ? _rate1 : _rate2;
 
     if (currentMillis - _previousMillis >= pulseDuration)
     {
-        _previousMillis = currentMillis; // Reset the timer
-        _ledState = !_ledState;          // Flip the state (ON -> OFF or OFF -> ON)
-
-        // Set the pin to the new physical state
-        digitalWrite(_ledPin, _ledState ? _ON : _OFF);
+        _previousMillis = currentMillis; 
+        
+        // Flip the logical state (ON -> OFF or OFF -> ON)
+        _ledState = !_ledState;
+        
+        // Write the new logical state to the pin using the inversion-aware helper
+        _writeHardwareState(_ledState);
     }
 }
 
-// --- NEW: start...() Functions ---
+// --- start...() Functions ---
 // These set the rates and enable the update() logic.
 
 void LedControl::startPulse()
@@ -122,8 +117,9 @@ void LedControl::startPulse()
     _rate2 = 50;
     _isNonBlocking = true;
     _previousMillis = millis(); // Start the timer
-    _ledState = true;           // Start in the ON state
-    digitalWrite(_ledPin, _ON);
+    
+    // We want to START in the ON state
+    _writeHardwareState(true);
 }
 
 void LedControl::startBlink()
@@ -132,8 +128,8 @@ void LedControl::startBlink()
     _rate2 = 100;
     _isNonBlocking = true;
     _previousMillis = millis();
-    _ledState = true;
-    digitalWrite(_ledPin, _ON);
+    
+    _writeHardwareState(true);
 }
 
 void LedControl::startBurst()
@@ -142,8 +138,8 @@ void LedControl::startBurst()
     _rate2 = 200;
     _isNonBlocking = true;
     _previousMillis = millis();
-    _ledState = true;
-    digitalWrite(_ledPin, _ON);
+    
+    _writeHardwareState(true);
 }
 
 void LedControl::startFlash()
@@ -152,30 +148,29 @@ void LedControl::startFlash()
     _rate2 = 20;
     _isNonBlocking = true;
     _previousMillis = millis();
-    _ledState = true;
-    digitalWrite(_ledPin, _ON);
+    
+    _writeHardwareState(true);
 }
 
-// --- STANDARD ON/OFF/SWAP FUNCTIONS ---
+// --- STANDARD ON/OFF/SWAP FUNCTIONS (FIXED) ---
 
 void LedControl::swap()
 {
-    // This correctly reads the pin's current state and flips it
-    uint8_t state = digitalRead(_ledPin);
-    digitalWrite(_ledPin, !state);
+    // Toggle the current stored logical state and write it
+    _isNonBlocking = false;
+    _writeHardwareState(!_ledState);
 }
-
-// --- MODIFIED: on() and off() ---
-// These must now disable the non-blocking mode.
 
 void LedControl::off()
 {
     _isNonBlocking = false; // Stop any non-blocking flash
-    digitalWrite(_ledPin, _OFF);
+    // Set logical state to OFF (false)
+    _writeHardwareState(false);
 }
 
 void LedControl::on()
 {
     _isNonBlocking = false; // Stop any non-blocking flash
-    digitalWrite(_ledPin, _ON);
+    // Set logical state to ON (true)
+    _writeHardwareState(true);
 }

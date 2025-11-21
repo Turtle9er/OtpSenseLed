@@ -7,15 +7,17 @@ class LedControl
 {
 private:
     int _ledPin;
+    bool is_inverted;
     // --- NEW Private Variables for Non-Blocking ---
     bool _isNonBlocking;  // True if we are in a non-blocking flash mode
     bool _ledState;       // The current logical state (true=ON, false=OFF)
     unsigned long _rate1; // On-time
     unsigned long _rate2; // Off-time
     unsigned long _previousMillis; // Timestamp of last state change
+    void _writeHardwareState(bool logicalState);
 
 public:
-    void begin(int ledPin);
+    void begin(int ledPin, bool inverted = false);
 
     // --- Blocking Flash Functions ---   
     // Flashes for a specific duration
